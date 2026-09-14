@@ -1,0 +1,17 @@
+#!/bin/bash
+# Fetch a GE-Proton build into this user's Steam + link the baked /opt copy too.
+# Usage: install-proton-ge [TAG]   (default: GE-Proton11-6; use 'latest' to query API)
+set -euo pipefail
+TAG="${1:-GE-Proton11-6}"
+if [ "$TAG" = "latest" ]; then
+  TAG="$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/GloriousEggroll/proton-ge-custom/releases/latest | grep -o '[^/]*$')"
+fi
+echo "[*] GE-Proton: $TAG"
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+curl -fL "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${TAG}/${TAG}.tar.gz" -o "$TMP/ge.tar.gz"
+for d in "$HOME/.steam/root/compatibilitytools.d" "$HOME/.local/share/Steam/compatibilitytools.d"; do
+  mkdir -p "$d"
+  tar -xzf "$TMP/ge.tar.gz" -C "$d"
+done
+[ -d /opt ] && sudo ln -sfn "/home/$USER/.steam/root/compatibilitytools.d/${TAG}" /opt/Proton-GE 2>/dev/null || true
+echo "[OK] $TAG installed. Restart Steam > game Properties > Compatibility > pick it."

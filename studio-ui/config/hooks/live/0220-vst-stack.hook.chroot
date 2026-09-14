@@ -1,0 +1,33 @@
+#!/bin/sh
+# 0220-vst-stack: pinned Yabridge (system-wide) + GE-Proton (system template).
+# Pins are verified upstream tags; override at build time if needed:
+#   YABRIDGE_VER=5.1.1 GE_PROTON_VER=GE-Proton11-6 lb build
+set -e
+
+YABRIDGE_VER="${YABRIDGE_VER:-5.1.1}"
+GE_PROTON_VER="${GE_PROTON_VER:-GE-Proton11-6}"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+echo "I: JRiDEoS Studio-UI VST stack hook (yabridge $YABRIDGE_VER, $GE_PROTON_VER)"
+
+# --- Yabridge system-wide: libs in /usr/share, ctl on PATH ---
+curl -fL "https://github.com/robbert-vdh/yabridge/releases/download/${YABRIDGE_VER}/yabridge-${YABRIDGE_VER}.tar.gz" \
+  -o "$TMP/yabridge.tar.gz"
+mkdir -p /usr/share/yabridge
+tar -xzf "$TMP/yabridge.tar.gz" -C /usr/share/yabridge
+ln -sf /usr/share/yabridge/yabridgectl /usr/local/bin/yabridgectl
+test -x /usr/share/yabridge/yabridgectl
+/usr/share/yabridge/yabridgectl --version
+
+# --- GE-Proton system template (per-user link done by firstboot script) ---
+curl -fL "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${GE_PROTON_VER}/${GE_PROTON_VER}.tar.gz" \
+  -o "$TMP/ge-proton.tar.gz"
+mkdir -p /opt
+tar -xzf "$TMP/ge-proton.tar.gz" -C /opt
+ln -sfn "/opt/${GE_PROTON_VER}" /opt/Proton-GE
+test -f "/opt/Proton-GE/compatibilitytool.vdf" || {
+  echo "E: GE-Proton template missing compatibilitytool.vdf" >&2
+  exit 1
+}
+echo "I: VST stack OK: $(/usr/share/yabridge/yabridgectl --version), ${GE_PROTON_VER}"

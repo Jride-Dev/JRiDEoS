@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=JRiDEoS VST auto-sync
+Comment=Register new Windows VST plugins with yabridge at login
+Exec=yabridge-sync-all --quiet
+Icon=audio-card
+X-GNOME-Autostart-enabled=true

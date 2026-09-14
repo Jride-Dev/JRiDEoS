@@ -1,0 +1,56 @@
+#!/bin/sh
+# 0230-rt-security: RT services + firstboot + UFW + AppArmor.
+set -e
+
+echo "I: JRiDEoS Studio-UI RT+security hook"
+
+systemctl enable rtirq 2>/dev/null || systemctl enable rtirq-init 2>/dev/null || true
+systemctl enable rtkit-daemon 2>/dev/null || true
+systemctl enable thermald 2>/dev/null || true
+systemctl enable power-profiles-daemon 2>/dev/null || true
+systemctl enable NetworkManager 2>/dev/null || true
+systemctl enable sddm 2>/dev/null || true
+systemctl enable apparmor 2>/dev/null || true
+systemctl enable ufw 2>/dev/null || true
+systemctl enable fail2ban 2>/dev/null || true
+systemctl enable unattended-upgrades 2>/dev/null || true
+systemctl enable systemd-resolved 2>/dev/null || true
+
+systemctl disable cups.service cups-browsed.service 2>/dev/null || true
+systemctl disable avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
+systemctl mask avahi-daemon.service 2>/dev/null || true
+
+rm -f /etc/resolv.conf
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || true
+
+# --- UFW seeded (can't run iptables in chroot): deny-in, allow-out, on at boot ---
+mkdir -p /etc/ufw
+sed -i 's/^ENABLED=.*/ENABLED=yes/' /etc/ufw/ufw.conf 2>/dev/null || echo "ENABLED=yes" > /etc/ufw/ufw.conf
+sed -i 's/^DEFAULT_INPUT_POLICY=.*/DEFAULT_INPUT_POLICY="DROP"/' /etc/default/ufw 2>/dev/null || true
+sed -i 's/^DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="DROP"/' /etc/default/ufw 2>/dev/null || true
+grep -q 'DEFAULT_OUTPUT_POLICY' /etc/default/ufw 2>/dev/null || echo 'DEFAULT_OUTPUT_POLICY="ACCEPT"' >> /etc/default/ufw
+
+# --- AppArmor enforce ---
+if grep -q '^GRUB_CMDLINE_LINUX_DEFAULT' /etc/default/grub 2>/dev/null; then
+  sed -i 's/apparmor=0//g; s/security=[^ "]*//g' /etc/default/grub
+  sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="\([^"]*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 apparmor=1 security=apparmor"/' /etc/default/grub
+fi
+
+# --- unattended security updates, minimal fail2ban ---
+mkdir -p /etc/apt/apt.conf.d
+cat > /etc/apt/apt.conf.d/51-jride-unattended <<'EOF'
+Unattended-Upgrade::Origins-Pattern {
+  "origin=Debian,codename=${distro_codename},label=Debian-Security";
+  "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+};
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+EOF
+mkdir -p /etc/fail2ban/jail.d
+printf '[DEFAULT]\nbantime = 1h\nfindtime = 10m\nmaxretry = 5\n' > /etc/fail2ban/jail.d/jride.conf
+
+# Sanity (warn-only here; hard gates live in 0210/0220)
+ls /boot/vmlinuz-*rt-amd64 >/dev/null 2>&1 || echo "W: no rt-amd64 kernel in /boot" >&2
+test -f /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so || \
+  echo "W: iHD_drv_video.so missing" >&2

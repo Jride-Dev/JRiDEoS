@@ -1,0 +1,59 @@
+#!/bin/bash
+# yabridge-sync-all — scan Wine prefixes for Windows VST2/VST3/CLAP plugins,
+# register new locations with yabridgectl, and sync. Idempotent: safe to run
+# on every login (also wired into KDE autostart).
+#
+# Usage:
+#   yabridge-sync-all [--quiet] [--prefix DIR]...
+# Env:
+#   WINEPREFIXES  colon-separated extra prefixes to scan
+#   YABRIDGE_BIN  path to yabridgectl (default: first on PATH)
+set -euo pipefail
+QUIET=0
+PREFIX_ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --quiet) QUIET=1; shift ;;
+    --prefix) PREFIX_ARGS+=("$2"); shift 2 ;;
+    *) echo "Unknown arg: $1" >&2; exit 2 ;;
+  esac
+done
+
+YABRIDGE_BIN="${YABRIDGE_BIN:-$(command -v yabridgectl)}"
+[ -x "$YABRIDGE_BIN" ] || { echo "E: yabridgectl not found" >&2; exit 1; }
+"$YABRIDGE_BIN" set --path=/usr/share/yabridge >/dev/null 2>&1 || true
+
+log() { [ "$QUIET" -eq 1 ] || echo "$*"; }
+
+PREFIXES="$HOME/.wine"
+[ -n "${WINEPREFIXES:-}" ] && PREFIXES="$PREFIXES:${WINEPREFIXES}"
+if [ "${#PREFIX_ARGS[@]}" -gt 0 ]; then
+  for p in "${PREFIX_ARGS[@]}"; do PREFIXES="$PREFIXES:$p"; done
+fi
+
+SUBDIRS="Program Files/VSTPlugins:Program Files/Steinberg/VstPlugins:Program Files/Common Files/VST2:Program Files/Common Files/VST3:Program Files/VST3:Program Files/Common Files/CLAP:Program Files/CLAP"
+ADDED=0
+OLDIFS="$IFS"
+IFS=":"
+for prefix in $PREFIXES; do
+  [ -d "$prefix/drive_c" ] || continue
+  IFS2="$IFS"; IFS=":"
+  for sub in $SUBDIRS; do
+    dir="$prefix/drive_c/$sub"
+    if [ -d "$dir" ]; then
+      if "$YABRIDGE_BIN" add "$dir" >/dev/null 2>&1; then
+        ADDED=$((ADDED+1)); log "[+] tracking: $dir"
+      fi
+    fi
+  done
+  IFS="$IFS2"
+done
+IFS="$OLDIFS"
+
+log "[*] syncing..."
+if "$YABRIDGE_BIN" sync 2>&1 | tee /tmp/yabridge-sync.log | grep -qiE "error|fail"; then
+  log "W: sync reported warnings — see /tmp/yabridge-sync.log"
+fi
+log "[OK] VST sync done ($ADDED new locations). Rescan plugins in REAPER/Ardour."
+command -v notify-send >/dev/null && [ "$QUIET" -eq 0 ] \
+  && notify-send -a yabridge "VST sync complete" "$ADDED new locations registered" || true

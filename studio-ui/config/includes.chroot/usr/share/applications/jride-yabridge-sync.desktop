@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Sync Windows VSTs (yabridge)
+Comment=Scan Wine prefixes for new VST2/VST3/CLAP plugins and sync them into REAPER/Ardour
+Exec=yabridge-sync-all
+Icon=audio-card
+Terminal=true
+Categories=AudioVideo;Audio;

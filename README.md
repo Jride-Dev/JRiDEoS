@@ -40,6 +40,19 @@ Mesa ANV, Steam/Proton/Wine, Ardour/Audacity/OBS. See `studio/README.md`.
 
 Tag `studio-v*` builds + attaches the Studio ISO to a GitHub release.
 
+## JRiDEoS Studio-UI (VST-heavy DAW + gaming spin)
+
+Third profile in `studio-ui/`, tagged `studio-ui-v*`: everything in Studio,
+plus **native** Wine-Staging (WineHQ), Yabridge + `yabridge-sync-all` auto-sync,
+GE-Proton template, UFW/firewall + RT configs. See `studio-ui/README.md`.
+
+```bash
+./build-studio-ui.sh
+```
+
+> Studio-UI ISO is ~3.5GB — over GitHub's 2GB release-asset cap, so ship it
+> via the Actions artifact (`jrideos-studio-ui-iso`), not the release.
+
 ## Test
 
 ```bash

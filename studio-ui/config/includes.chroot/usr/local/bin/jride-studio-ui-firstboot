@@ -1,0 +1,27 @@
+#!/bin/bash
+# First-boot setup for JRiDEoS Studio-UI. Run once (live or installed), then log out/in.
+#   sudo jride-studio-ui-firstboot
+set -euo pipefail
+if [ "$(id -u)" -ne 0 ]; then exec sudo bash "$0" "$@"; fi
+TARGET="${SUDO_USER:-user}"
+echo "[*] 1/4 groups for $TARGET..."
+for g in audio video plugdev lp; do
+  getent group "$g" >/dev/null && usermod -aG "$g" "$TARGET" || true
+done
+echo "[*] 2/4 yabridge system path..."
+sudo -u "$TARGET" yabridgectl set --path=/usr/share/yabridge || true
+echo "[*] 3/4 link baked GE-Proton into Steam compat dirs..."
+for d in "$HOME/.steam/root/compatibilitytools.d" "/home/$TARGET/.steam/root/compatibilitytools.d" "/home/$TARGET/.local/share/Steam/compatibilitytools.d"; do
+  if [ -d "$(dirname "$d")" ]; then
+    mkdir -p "$d"
+    ln -sfn /opt/Proton-GE "$d/Proton-GE" 2>/dev/null || true
+    echo "    linked: $d/Proton-GE"
+  fi
+done
+echo "[*] 4/4 initial VST sync..."
+sudo -u "$TARGET" yabridge-sync-all --quiet || true
+echo ""
+echo "[OK] Done. LOG OUT + BACK IN (groups + rtprio need a fresh session), then:"
+echo "    cat /sys/kernel/realtime   # expect 1"
+echo "    ulimit -r                  # expect 95"
+echo "    pw-top                     # DSP load while playing"

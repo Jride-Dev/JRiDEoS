@@ -1,0 +1,15 @@
+#!/bin/bash
+# Install REAPER (native Linux, proprietary — fetched, not redistributed in ISO)
+# Usage: sudo install-reaper [version]   e.g. sudo install-reaper 7.25
+set -euo pipefail
+VER="${1:-7.25}"
+MAJOR="${VER%.*}"
+URL="https://www.reaper.fm/files/${MAJOR}.x/reaper${VER//.}_linux_x86_64.tar.xz"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+echo "[*] Downloading REAPER $VER ..."
+curl -fL "$URL" -o "$TMP/reaper.tar.xz"
+tar -xJf "$TMP/reaper.tar.xz" -C "$TMP"
+sudo "$TMP"/reaper_linux_x86_64/install-reaper.sh --install /opt --integrate-desktop
+echo "[OK] REAPER $VER installed. Run with: pw-jack /opt/REAPER/reaper"
+echo "     Bridged VSTs appear after: yabridge-sync-all"
