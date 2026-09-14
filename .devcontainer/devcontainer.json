@@ -1,0 +1,12 @@
+{
+  "name": "JRiDEoS builder (Debian trixie)",
+  "image": "mcr.microsoft.com/devcontainers/base:trixie",
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": []
+    }
+  },
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends live-build debootstrap cdebootstrap squashfs-tools xorriso isolinux syslinux-efi grub-pc-bin grub-efi-amd64-bin mtools dosfstools qemu-system-x86",
+  "remoteUser": "vscode"
+}

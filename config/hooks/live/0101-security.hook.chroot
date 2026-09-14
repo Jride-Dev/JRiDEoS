@@ -1,0 +1,49 @@
+#!/bin/sh
+# 0101-security: firewall + apparmor + unattended-upgrades defaults
+set -e
+
+echo "I: JRiDEoS security hook"
+
+# --- UFW: deny incoming, allow outgoing, enable on boot ---
+# We can't run iptables in chroot, so seed config files directly.
+mkdir -p /etc/ufw
+sed -i 's/^ENABLED=.*/ENABLED=yes/' /etc/ufw/ufw.conf 2>/dev/null || echo "ENABLED=yes" > /etc/ufw/ufw.conf
+sed -i 's/^DEFAULT_INPUT_POLICY=.*/DEFAULT_INPUT_POLICY="DROP"/' /etc/default/ufw 2>/dev/null || true
+sed -i 's/^DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="DROP"/' /etc/default/ufw 2>/dev/null || true
+# default outgoing allow is already the Debian default; ensure it:
+grep -q 'DEFAULT_OUTPUT_POLICY' /etc/default/ufw 2>/dev/null || echo 'DEFAULT_OUTPUT_POLICY="ACCEPT"' >> /etc/default/ufw
+
+# --- AppArmor: enforce everything, enable on boot ---
+mkdir -p /etc/default
+if grep -q '^GRUB_CMDLINE_LINUX_DEFAULT' /etc/default/grub 2>/dev/null; then
+  sed -i 's/apparmor=0//g; s/security=[^ "]*//g' /etc/default/grub
+  sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="\([^"]*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 apparmor=1 security=apparmor"/' /etc/default/grub
+fi
+
+# --- unattended-upgrades: security-only + auto-reboot 04:00 ---
+mkdir -p /etc/apt/apt.conf.d
+cat > /etc/apt/apt.conf.d/51-jride-unattended <<'EOF'
+Unattended-Upgrade::Origins-Pattern {
+  "origin=Debian,codename=${distro_codename},label=Debian-Security";
+  "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+};
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+EOF
+cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
+
+# --- fail2ban: minimal, no open ports anyway ---
+mkdir -p /etc/fail2ban/jail.d
+cat > /etc/fail2ban/jail.d/jride.conf <<'EOF'
+[DEFAULT]
+bantime = 1h
+findtime = 10m
+maxretry = 5
+EOF
+
+# --- lock down LightDM guest ---
+mkdir -p /etc/lightdm/lightdm.conf.d

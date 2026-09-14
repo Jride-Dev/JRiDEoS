@@ -1,0 +1,10 @@
+cache/*
+chroot/*
+binary/*
+build.log
+*.iso
+*.hybrid.iso
+*.contents
+*.packages
+*.files
+*.sha256

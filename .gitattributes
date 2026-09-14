@@ -1,0 +1,9 @@
+# Force LF for Linux live-build scripts (critical on Windows checkouts)
+*.sh text eol=lf
+auto/config text eol=lf
+*.hook.chroot text eol=lf
+*.hook.binary text eol=lf
+config/package-lists/* text eol=lf
+config/includes.chroot/etc/**/* text eol=lf
+*.yml text eol=lf
+*.json text eol=lf

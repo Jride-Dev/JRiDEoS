@@ -1,0 +1,26 @@
+#!/bin/sh
+# JRiDEoS live-build config — Gateway GWTN141-10 (Tiger Lake i5-1135G7 + Iris Xe)
+# Run via: ./build.sh  (inside Debian trixie container / Codespace)
+set -e
+
+lb config noauto \
+  --mode debian \
+  --distribution trixie \
+  --archive-areas "main contrib non-free non-free-firmware" \
+  --linux-flavours amd64 \
+  --debian-installer live \
+  --debian-installer-distribution trixie \
+  --bootloaders "syslinux grub-efi" \
+  --uefi-secure-boot enable \
+  --iso-application "JRiDEoS" \
+  --iso-preparer "Jride-Dev" \
+  --iso-volume "JRIDEOS 1.0 TGL" \
+  --iso-publisher "JRiDEoS" \
+  --image-name "jrideos-tgl-1.0-amd64" \
+  --apt-recommends false \
+  --apt-indices false \
+  --memtest none \
+  --win32-loader false \
+  --firmware-binary true \
+  --firmware-chroot true \
+  "${@}"

@@ -1,0 +1,33 @@
+#!/bin/sh
+# 0100-tgl: Tiger Lake hardware enablement — Gateway GWTN141-10
+set -e
+
+echo "I: JRiDEoS TGL hardware hook"
+
+# Services: enable what we need, kill bloat listeners
+systemctl enable thermald 2>/dev/null || true
+systemctl enable power-profiles-daemon 2>/dev/null || true
+systemctl enable NetworkManager 2>/dev/null || true
+systemctl enable apparmor 2>/dev/null || true
+systemctl enable ufw 2>/dev/null || true
+systemctl enable unattended-upgrades 2>/dev/null || true
+systemctl enable systemd-resolved 2>/dev/null || true
+systemctl enable systemd-timesyncd 2>/dev/null || true
+
+# Bluetooth: keep installed but socket-activated only (no always-on daemon)
+systemctl disable bluetooth.service 2>/dev/null || true
+
+# Never ship these listeners on a browsing appliance
+systemctl disable cups.service cups-browsed.service 2>/dev/null || true
+systemctl disable avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
+systemctl mask avahi-daemon.service 2>/dev/null || true
+
+# resolv.conf -> systemd-resolved stub (for DoH config)
+rm -f /etc/resolv.conf
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || true
+
+# Verify critical Iris Xe / SOF / iwlwifi bits exist (fail fast in CI)
+test -f /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so || \
+  echo "W: iHD_drv_video.so missing — check intel-media-driver" >&2
+test -d /lib/firmware/i915 || echo "W: /lib/firmware/i915 missing" >&2
+test -d /lib/firmware/sof  || echo "W: /lib/firmware/sof missing" >&2

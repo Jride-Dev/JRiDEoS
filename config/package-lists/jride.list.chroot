@@ -1,0 +1,93 @@
+# JRiDEoS — package list for Gateway GWTN141-10 (Tiger Lake)
+# live-build: installed into target chroot. No recommends (see auto/config).
+
+# --- live + base ---
+live-boot
+live-config
+live-config-systemd
+systemd
+systemd-resolved
+systemd-timesyncd
+dbus
+sudo
+vim-tiny
+less
+ca-certificates
+
+# --- kernel / microcode / firmware (Tiger Lake-UP3) ---
+linux-image-amd64
+intel-microcode
+firmware-linux
+firmware-misc-nonfree
+firmware-iwlwifi
+firmware-sof-signed
+firmware-realtek
+
+# --- Iris Xe graphics + VA-API (iHD driver, NOT legacy i965) ---
+mesa-va-drivers
+mesa-vulkan-drivers
+mesa-vdpau-drivers
+intel-media-driver
+libva2
+libva-drm2
+libvdpau1
+vainfo
+intel-gpu-tools
+vulkan-tools
+
+# --- platform: power / thermal / nvme ---
+thermald
+power-profiles-daemon
+powertop
+nvme-cli
+acpi
+acpid
+
+# --- audio: SOF Tiger Lake + Realtek ALC (THX tuning is Windows-only) ---
+alsa-ucm-conf
+alsa-utils
+pipewire
+pipewire-pulse
+wireplumber
+pavucontrol
+
+# --- input / display: touchpad, webcam, xorg ---
+xserver-xorg-core
+xserver-xorg
+xserver-xorg-video-intel
+xserver-xorg-input-libinput
+libinput-tools
+v4l-utils
+
+# --- net: Intel AC9461/AX201 (iwlwifi) + Realtek fallback + BT 5.0 ---
+network-manager
+wpasupplicant
+wireless-tools
+iw
+bluetooth
+bluez
+
+# --- desktop: XFCE minimal (snappy, ~550MB idle) ---
+xfce4
+xfce4-terminal
+thunar
+mousepad
+ristretto
+xfce4-power-manager
+xfce4-screenshooter
+network-manager-gnome
+lightdm
+lightdm-gtk-greeter
+adwaita-icon-theme
+
+# --- secure browsing ---
+firefox-esr
+
+# --- security hardening ---
+apparmor
+apparmor-profiles
+apparmor-utils
+ufw
+fail2ban
+unattended-upgrades
+needrestart

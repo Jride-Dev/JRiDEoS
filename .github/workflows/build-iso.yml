@@ -1,0 +1,38 @@
+name: build-iso
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install live-build deps
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            live-build debootstrap cdebootstrap \
+            squashfs-tools xorriso isolinux syslinux-efi \
+            grub-pc-bin grub-efi-amd64-bin mtools dosfstools
+
+      - name: Build ISO
+        run: |
+          sh auto/config
+          lb build 2>&1 | tee build.log
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: jrideos-iso
+          path: |
+            *.iso
+            *.contents
+            *.packages
+            build.log
