@@ -27,7 +27,7 @@ firmware-realtek
 mesa-va-drivers
 mesa-vulkan-drivers
 mesa-vdpau-drivers
-intel-media-driver
+intel-media-va-driver
 libva2
 libva-drm2
 libvdpau1
@@ -52,9 +52,9 @@ wireplumber
 pavucontrol
 
 # --- input / display: touchpad, webcam, xorg ---
+# NOTE: use modesetting (built-in) for Iris Xe, NOT legacy -intel driver
 xserver-xorg-core
 xserver-xorg
-xserver-xorg-video-intel
 xserver-xorg-input-libinput
 libinput-tools
 v4l-utils
