@@ -1,6 +1,6 @@
 {
-  "name": "JRiDEoS builder (Debian trixie)",
-  "image": "mcr.microsoft.com/devcontainers/base:trixie",
+  "name": "JRiDEoS builder (Debian bookworm host, trixie target)",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
   "features": {},
   "customizations": {
     "vscode": {
