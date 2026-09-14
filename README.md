@@ -29,6 +29,17 @@ Output: `jrideos-tgl-1.0-amd64.hybrid.iso`
 
 Or push to `main` — `.github/workflows/build-iso.yml` builds the ISO in CI and uploads it as an artifact.
 
+## JRiDEoS Studio 2.0 (DAW + gaming spin)
+
+Second profile in `studio/`: PREEMPT_RT kernel, KDE Plasma Wayland, PipeWire-JACK,
+Mesa ANV, Steam/Proton/Wine, Ardour/Audacity/OBS. See `studio/README.md`.
+
+```bash
+./build-studio.sh
+```
+
+Tag `studio-v*` builds + attaches the Studio ISO to a GitHub release.
+
 ## Test
 
 ```bash

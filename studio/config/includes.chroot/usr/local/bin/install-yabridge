@@ -1,0 +1,18 @@
+#!/bin/bash
+# Install yabridge (Windows VST2/VST3 bridge) + wineasio, then sync plugins.
+# Usage: install-yabridge   (run as user; uses sudo for the .deb only)
+set -euo pipefail
+VER="${YABRIDGE_VER:-5.1.0}"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+curl -fL "https://github.com/robbert-vdh/yabridge/releases/download/${VER}/yabridge-${VER}.tar.gz" \
+  -o "$TMP/yabridge.tar.gz"
+mkdir -p ~/.local/share/yabridge
+tar -xzf "$TMP/yabridge.tar.gz" -C ~/.local/share/yabridge
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends wineasio || true
+yabridgectl set --path="$HOME/.local/share/yabridge" || true
+yabridgectl add "$HOME/.wine/drive_c/Program Files/VST3" 2>/dev/null || true
+yabridgectl add "$HOME/.wine/drive_c/Program Files/Steinberg/VstPlugins" 2>/dev/null || true
+yabridgectl sync
+echo "[OK] yabridge $VER ready. Rescan plugins in Ardour/REAPER."

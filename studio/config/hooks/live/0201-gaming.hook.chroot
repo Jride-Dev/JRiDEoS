@@ -1,0 +1,51 @@
+#!/bin/sh
+# 0201-gaming: multilib (Steam/Proton/Wine) + gamemode defaults.
+# Third-party bits (WineHQ staging, yabridge, REAPER) are install SCRIPTS
+# in /usr/local/bin — never fetched here — so CI stays reproducible.
+set -e
+
+echo "I: JRiDEoS Studio gaming hook"
+
+# --- multiarch for Proton / Wine / Steam 32-bit ---
+dpkg --add-architecture i386
+apt-get update
+apt-get install -y --no-install-recommends \
+  mesa-vulkan-drivers:i386 \
+  libvulkan1:i386
+
+# --- gamemode: Iris Xe gets performance governor + GPU clocks while gaming ---
+mkdir -p /etc/gamemode.d
+cat > /etc/gamemode.d/jride.ini <<'EOF'
+[general]
+reaper_freq=0
+desiredgov=performance
+defaultgov=powersave
+igpu_power_threshold=0.3
+
+[custom]
+start=notify-send -a GameMode "GameMode started"
+end=notify-send -a GameMode "GameMode ended"
+EOF
+
+# --- Steam: allow unprivileged userns + 32-bit loader path (Proton needs it) ---
+sysctl -w kernel.unprivileged_userns_clone=1 2>/dev/null || true
+mkdir -p /etc/sysctl.d
+echo "kernel.unprivileged_userns_clone=1" > /etc/sysctl.d/98-steam.conf
+
+# --- MangoHud: sane Iris Xe defaults, toggle with Right-Shift+F12 ---
+mkdir -p /etc/skel/.config
+cat > /etc/skel/.config/MangoHud.conf <<'EOF'
+legacy_layout=false
+table_columns=14
+gpu_stats
+gpu_temp
+cpu_stats
+cpu_temp
+ram
+vram
+fps
+frametime
+frame_timing=1
+toggle_hud=Shift_R+F12
+EOF
+cp /etc/skel/.config/MangoHud.conf /root/.config/MangoHud.conf 2>/dev/null || true

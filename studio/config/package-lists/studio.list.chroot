@@ -1,0 +1,109 @@
+# JRiDEoS Studio — DAW + gaming package list for GWTN141-10 (Tiger Lake)
+# live-build: installed into target chroot. No recommends (see studio/auto/config).
+# NOTE: :i386 multilib + WineHQ staging + yabridge/REAPER are handled in
+# hooks (0201) and /usr/local/bin install scripts — NOT here — so a missing
+# third-party repo can never fail the base ISO build.
+
+# --- live + base ---
+live-boot
+live-config
+live-config-systemd
+systemd
+systemd-resolved
+systemd-timesyncd
+dbus
+sudo
+vim-tiny
+less
+ca-certificates
+curl
+wget
+
+# --- PREEMPT_RT kernel / microcode / firmware (Tiger Lake-UP3) ---
+linux-image-rt-amd64
+intel-microcode
+firmware-linux
+firmware-misc-nonfree
+firmware-iwlwifi
+firmware-sof-signed
+firmware-realtek
+rtirq-init
+rtkit
+
+# --- Iris Xe graphics: Mesa ANV Vulkan + iHD VA-API (64-bit; :i386 in hook) ---
+mesa-vulkan-drivers
+mesa-va-drivers
+mesa-vdpau-drivers
+intel-media-va-driver
+libvulkan1
+libva2
+libva-drm2
+libvdpau1
+vainfo
+intel-gpu-tools
+vulkan-tools
+
+# --- platform: power / thermal / nvme ---
+thermald
+power-profiles-daemon
+powertop
+nvme-cli
+linux-cpupower
+acpi
+acpid
+
+# --- pro-audio: PipeWire full JACK replacement + ALSA/MIDI tools ---
+alsa-ucm-conf
+alsa-utils
+alsa-tools
+pipewire
+pipewire-jack
+pipewire-alsa
+pipewire-pulse
+wireplumber
+qpwgraph
+pavucontrol-qt
+
+# --- creation suite (native Debian packages) ---
+ardour
+audacity
+obs-studio
+calf-plugins
+lsp-plugins
+x42-plugins
+
+# --- gaming (64-bit; 32-bit multilib added in hook) ---
+steam-installer
+gamescope
+gamemode
+mangohud
+wine64
+wine32
+winetricks
+
+# --- net: Intel AC9461/AX201 (iwlwifi) + Realtek fallback + BT ---
+network-manager
+wpasupplicant
+wireless-tools
+iw
+bluetooth
+bluez
+
+# --- desktop: KDE Plasma Wayland (fractional scaling for 14.1" FHD) ---
+kde-plasma-desktop
+sddm
+konsole
+dolphin
+kate
+plasma-nm
+plasma-pa
+powerdevil
+adwaita-icon-theme
+
+# --- browser + security baseline ---
+firefox-esr
+apparmor
+apparmor-profiles
+apparmor-utils
+ufw
+unattended-upgrades

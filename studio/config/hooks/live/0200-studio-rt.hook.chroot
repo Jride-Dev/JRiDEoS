@@ -1,0 +1,49 @@
+#!/bin/sh
+# 0200-studio-rt: PREEMPT_RT enablement — Gateway GWTN141-10 (Tiger Lake)
+set -e
+
+echo "I: JRiDEoS Studio RT hook"
+
+# RT services on boot
+systemctl enable rtirq 2>/dev/null || systemctl enable rtirq-init 2>/dev/null || true
+systemctl enable rtkit-daemon 2>/dev/null || true
+systemctl enable thermald 2>/dev/null || true
+systemctl enable power-profiles-daemon 2>/dev/null || true
+systemctl enable NetworkManager 2>/dev/null || true
+systemctl enable sddm 2>/dev/null || true
+systemctl enable apparmor 2>/dev/null || true
+systemctl enable ufw 2>/dev/null || true
+systemctl enable unattended-upgrades 2>/dev/null || true
+systemctl enable systemd-resolved 2>/dev/null || true
+
+# Never ship these listeners on a media box either
+systemctl disable cups.service cups-browsed.service 2>/dev/null || true
+systemctl disable avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
+systemctl mask avahi-daemon.service 2>/dev/null || true
+
+# resolv.conf -> systemd-resolved stub
+rm -f /etc/resolv.conf
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf || true
+
+# First-boot helper: live user gets pro-audio groups on installed/live system.
+# (live-config creates the live user at boot, so static usermod here can't apply.)
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/jride-studio-firstboot <<'EOF'
+#!/bin/bash
+# Run once after install / first live boot: audio groups + realtime check
+set -e
+TARGET="${SUDO_USER:-$USER}"
+for g in audio video plugdev lp; do
+  getent group "$g" >/dev/null && sudo usermod -aG "$g" "$TARGET" || true
+done
+echo "[*] Groups for $TARGET: $(id -nG "$TARGET")"
+echo "[*] RT kernel: $(cat /sys/kernel/realtime 2>/dev/null || echo 'not PREEMPT_RT')"
+ulimit -r || true
+echo "[*] Log out + back in for groups to apply, then run: pw-top"
+EOF
+chmod +x /usr/local/bin/jride-studio-firstboot
+
+# Sanity: RT kernel + iHD driver present (warn-only, don't fail CI here)
+ls /boot/vmlinuz-*rt-amd64 >/dev/null 2>&1 || echo "W: no rt-amd64 kernel in /boot" >&2
+test -f /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so || \
+  echo "W: iHD_drv_video.so missing — check intel-media-va-driver" >&2

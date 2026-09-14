@@ -1,0 +1,28 @@
+#!/bin/sh
+# JRiDEoS Studio live-build config — Gateway GWTN141-10
+# DAW + gaming spin: KDE Plasma Wayland, PREEMPT_RT kernel, PipeWire JACK.
+# Run from studio/ dir via: ./build.sh  (inside Debian container / Codespace)
+set -e
+
+lb config noauto \
+  --mode debian \
+  --distribution trixie \
+  --archive-areas "main contrib non-free non-free-firmware" \
+  --linux-flavours rt-amd64 \
+  --debian-installer live \
+  --debian-installer-distribution trixie \
+  --bootloaders "syslinux grub-efi" \
+  --uefi-secure-boot enable \
+  --iso-application "JRiDEoS-Studio" \
+  --iso-preparer "Jride-Dev" \
+  --iso-volume "JRIDEOS-STUDIO 2.0" \
+  --iso-publisher "JRiDEoS" \
+  --image-name "jrideos-studio-2.0-amd64" \
+  --apt-recommends false \
+  --apt-indices false \
+  --memtest none \
+  --win32-loader false \
+  --firmware-binary true \
+  --firmware-chroot true \
+  --bootappend-live "threadirqs preempt=full intel_pstate=active i915.enable_guc=3" \
+  "${@}"
