@@ -3,7 +3,11 @@ name: build-iso
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -23,9 +27,14 @@ jobs:
             grub-pc-bin grub-efi-amd64-bin mtools dosfstools
 
       - name: Build ISO
+        shell: bash
         run: |
+          set -o pipefail
           sh auto/config
           lb build 2>&1 | tee build.log
+          echo "--- build outputs ---"
+          ls -lh
+          ls -lh *.iso || (echo "E: no ISO produced, build failed"; exit 1)
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
@@ -36,3 +45,25 @@ jobs:
             *.contents
             *.packages
             build.log
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: jrideos-iso
+          path: dist
+
+      - name: List dist
+        run: ls -lhR dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.iso
+            dist/*.contents
+            dist/*.packages
+            dist/build.log
